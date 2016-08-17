@@ -116,6 +116,12 @@
         </artifact>
     </artifactSet>
 
+    <artifactSet to="plugin/chicago">
+        <artifact id="${project.groupId}:presto-chicago:zip:${project.version}">
+            <unpack />
+        </artifact>
+    </artifactSet>
+
     <artifactSet to="plugin/tpch">
         <artifact id="${project.groupId}:presto-tpch:zip:${project.version}">
             <unpack />

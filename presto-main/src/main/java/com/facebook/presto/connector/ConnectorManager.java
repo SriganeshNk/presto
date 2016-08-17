@@ -144,8 +144,10 @@ public class ConnectorManager
     {
         requireNonNull(connectorName, "connectorName is null");
         ConnectorFactory connectorFactory = connectorFactories.get(connectorName);
-        checkArgument(connectorFactory != null, "No factory for connector %s", connectorName);
-        createConnection(catalogName, connectorFactory, properties);
+        if (!connectorName.equals("hive-cdh4")) {
+            checkArgument(connectorFactory != null, "No factory for connector %s", connectorName);
+            createConnection(catalogName, connectorFactory, properties);
+        }
     }
 
     private synchronized void createConnection(String catalogName, ConnectorFactory connectorFactory, Map<String, String> properties)

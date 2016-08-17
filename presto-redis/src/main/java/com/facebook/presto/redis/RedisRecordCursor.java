@@ -337,8 +337,14 @@ public class RedisRecordCursor
 
     private boolean fetchData(String keyString)
     {
-        valueString = null;
-        valueMap = null;
+        //valueString = null;
+        //valueMap = null;
+        log.info("--------------");
+        log.info(keyString);
+        log.info("--------------");
+        log.info(split.getKeyDataFormat());
+        log.info("--------------");
+        log.info(split.getValueDataFormat());
         // Redis connector supports two types of Redis
         // values: STRING and HASH
         // HASH types requires hash row decoder to
