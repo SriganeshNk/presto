@@ -16,15 +16,12 @@ package com.facebook.presto.chicago;
 import com.facebook.presto.spi.ConnectorFactory;
 import com.facebook.presto.spi.Plugin;
 import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.spi.type.TypeManager;
+import com.facebook.presto.spi.connector.ConnectorFactoryContext;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import javax.inject.Inject;
-
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,7 +32,6 @@ import static java.util.Objects.requireNonNull;
  */
 public class ChicagoPlugin implements Plugin
 {
-  private TypeManager typeManager;
   private Optional<Supplier<Map<SchemaTableName, ChicagoTableDescription>>> tableDescriptionSupplier = Optional.empty();
   private Map<String, String> optionalConfig = ImmutableMap.of();
 
@@ -45,23 +41,18 @@ public class ChicagoPlugin implements Plugin
     this.optionalConfig = ImmutableMap.copyOf(requireNonNull(optionalConfig, "optionalConfig is null"));
   }
 
-  @Inject
-  public synchronized void setTypeManager(TypeManager typeManager)
-  {
-    this.typeManager = requireNonNull(typeManager, "typeManager is null");
-  }
-
   @VisibleForTesting
   public synchronized void setTableDescriptionSupplier(Supplier<Map<SchemaTableName, ChicagoTableDescription>> tableDescriptionSupplier)
   {
     this.tableDescriptionSupplier = Optional.of(requireNonNull(tableDescriptionSupplier, "tableDescriptionSupplier is null"));
   }
 
-  public synchronized <T> List<T> getServices(Class<T> type)
+  @Override
+  public synchronized Iterable<ConnectorFactory> getLegacyConnectorFactories(ConnectorFactoryContext context)
   {
-    if (type == ConnectorFactory.class) {
-      return ImmutableList.of(type.cast(new ChicagoConnectorFactory(typeManager, tableDescriptionSupplier, optionalConfig)));
-    }
-    return ImmutableList.of();
+    return ImmutableList.of(new ChicagoConnectorFactory(
+        context.getTypeManager(),
+        tableDescriptionSupplier,
+        optionalConfig));
   }
 }

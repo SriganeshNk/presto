@@ -77,7 +77,7 @@ public class ChicagoConnectorConfig
     return this.zkString;
   }
 
-  @Config("chicago.zkstring")
+  @Config("chicago.zk-string")
   public ChicagoConnectorConfig setZkSring(String zk)
   {
     this.zkString = zk;
@@ -128,25 +128,12 @@ public class ChicagoConnectorConfig
   }
 
   @NotNull
-  public String getNodes()
-  {
-    return this.zkString;
-  }
-
-  @Config("chicago.zkString")
-  public ChicagoConnectorConfig setNodes(String nodes)
-  {
-    this.zkString = nodes;
-    return this;
-  }
-
-  @NotNull
   public int getQuorumSize()
   {
     return this.quorumSize;
   }
 
-  @Config("chicago.quorum")
+  @Config("chicago.quorum-size")
   public ChicagoConnectorConfig setQuorumSize(int q)
   {
     this.quorumSize = q;

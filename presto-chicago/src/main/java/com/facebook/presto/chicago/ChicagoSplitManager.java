@@ -55,7 +55,7 @@ public class ChicagoSplitManager implements ConnectorSplitManager
      */
     ChicagoTableHandle chicagoTableHandle = convertLayout(layout).getTable();
 
-    String nodes = chicagoConnectorConfig.getNodes();
+    String nodes = chicagoConnectorConfig.getZkString();
 
     checkState(nodes == null, "ZKString  no longer exists");
     ImmutableList.Builder<ConnectorSplit> builder = ImmutableList.builder();
