@@ -46,11 +46,11 @@
         <air.maven.version>3.3.9</air.maven.version>
 
         <dep.antlr.version>4.5.1</dep.antlr.version>
-        <dep.airlift.version>0.133</dep.airlift.version>
+        <dep.airlift.version>0.134</dep.airlift.version>
         <dep.packaging.version>${dep.airlift.version}</dep.packaging.version>
-        <dep.slice.version>0.23</dep.slice.version>
+        <dep.slice.version>0.24</dep.slice.version>
         <dep.aws-sdk.version>1.9.40</dep.aws-sdk.version>
-        <dep.tempto.version>1.8</dep.tempto.version>
+        <dep.tempto.version>1.12</dep.tempto.version>
 
         <!--
         Versions newer than 6.9 appear to have an issue where the @BeforeClass method in
@@ -1006,14 +1006,14 @@
             <plugin>
                 <groupId>io.takari.maven.plugins</groupId>
                 <artifactId>presto-maven-plugin</artifactId>
-                <version>0.1.8</version>
+                <version>0.1.9</version>
                 <extensions>true</extensions>
             </plugin>
 
             <plugin>
                 <groupId>io.takari.maven.plugins</groupId>
                 <artifactId>provisio-maven-plugin</artifactId>
-                <version>0.1.28</version>
+                <version>0.1.38</version>
                 <extensions>true</extensions>
             </plugin>
 

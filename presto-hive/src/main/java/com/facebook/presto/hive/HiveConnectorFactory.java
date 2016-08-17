@@ -14,12 +14,15 @@
 package com.facebook.presto.hive;
 
 import com.facebook.presto.hive.metastore.ExtendedHiveMetastore;
+import com.facebook.presto.plugin.base.security.FileBasedAccessControlModule;
+import com.facebook.presto.plugin.base.security.ReadOnlySecurityModule;
 import com.facebook.presto.spi.ConnectorHandleResolver;
 import com.facebook.presto.spi.NodeManager;
 import com.facebook.presto.spi.PageIndexerFactory;
 import com.facebook.presto.spi.classloader.ThreadContextClassLoader;
 import com.facebook.presto.spi.connector.Connector;
 import com.facebook.presto.spi.connector.ConnectorAccessControl;
+import com.facebook.presto.spi.connector.ConnectorContext;
 import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.facebook.presto.spi.connector.ConnectorNodePartitioningProvider;
 import com.facebook.presto.spi.connector.ConnectorPageSinkProvider;
@@ -99,7 +102,7 @@ public class HiveConnectorFactory
     }
 
     @Override
-    public Connector create(String connectorId, Map<String, String> config)
+    public Connector create(String connectorId, Map<String, String> config, ConnectorContext context)
     {
         requireNonNull(config, "config is null");
 
@@ -113,6 +116,10 @@ public class HiveConnectorFactory
                             SecurityConfig.class,
                             security -> ALLOW_ALL_ACCESS_CONTROL.equalsIgnoreCase(security.getSecuritySystem()),
                             new NoSecurityModule()),
+                    installModuleIf(
+                            SecurityConfig.class,
+                            security -> "file".equalsIgnoreCase(security.getSecuritySystem()),
+                            new FileBasedAccessControlModule()),
                     installModuleIf(
                             SecurityConfig.class,
                             security -> "read-only".equalsIgnoreCase(security.getSecuritySystem()),

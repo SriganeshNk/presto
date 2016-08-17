@@ -1571,8 +1571,8 @@ public abstract class AbstractTestQueries
         assertQuery("SELECT regionkey FROM nation WHERE nationkey < 7 INTERSECT select regionkey FROM nation WHERE nationkey > 21", "VALUES 1, 3");
         assertQuery("SELECT regionkey FROM nation WHERE nationkey < 7 INTERSECT DISTINCT SELECT regionkey FROM nation WHERE nationkey > 21", "VALUES 1, 3");
         assertQuery("WITH wnation AS (SELECT nationkey, regionkey FROM nation) SELECT regionkey FROM wnation WHERE nationkey < 7 INTERSECT SELECT regionkey FROM wnation WHERE nationkey > 21", "VALUES 1, 3");
-        assertQuery("SELECT num FROM (SELECT 1 as num FROM nation WHERE nationkey=10 intersect SELECT 1 FROM nation WHERE nationkey=20) T", "SELECT 1");
-        assertQuery("SELECT nationkey, nationkey / 2 FROM (SELECT nationkey FROM nation WHERE nationkey < 10 INTERSECT SELECT nationkey FROM nation WHERE nationkey > 4)T WHERE nationkey % 2 = 0", "VALUES (6,3), (8,4)");
+        assertQuery("SELECT num FROM (SELECT 1 as num FROM nation WHERE nationkey=10 INTERSECT SELECT 1 FROM nation WHERE nationkey=20) T", "SELECT 1");
+        assertQuery("SELECT nationkey, nationkey / 2 FROM (SELECT nationkey FROM nation WHERE nationkey < 10 INTERSECT SELECT nationkey FROM nation WHERE nationkey > 4) T WHERE nationkey % 2 = 0", "VALUES (6,3), (8,4)");
         assertQuery("SELECT regionkey FROM (SELECT regionkey FROM nation WHERE nationkey < 7 INTERSECT SELECT regionkey FROM nation WHERE nationkey > 21) UNION SELECT 4", "VALUES 3, 1, 4");
         assertQuery("SELECT regionkey FROM (SELECT regionkey FROM nation WHERE nationkey < 7 UNION SELECT regionkey FROM nation WHERE nationkey > 21) INTERSECT SELECT 1", "SELECT 1");
         assertQuery("SELECT regionkey FROM (SELECT regionkey FROM nation WHERE nationkey < 7 INTERSECT SELECT regionkey FROM nation WHERE nationkey > 21) UNION ALL SELECT 3", "VALUES 3, 1, 3");
@@ -1588,17 +1588,53 @@ public abstract class AbstractTestQueries
             throws Exception
     {
         assertQuery("SELECT COUNT(*) FROM nation INTERSECT SELECT COUNT(regionkey) FROM nation HAVING SUM(regionkey) IS NOT NULL", "SELECT 25");
-        assertQuery("SELECT SUM(nationkey), COUNT(name) FROM (SELECT nationkey,name FROM nation INTERSECT SELECT regionkey,name FROM nation)n", "VALUES (5, 3)");
+        assertQuery("SELECT SUM(nationkey), COUNT(name) FROM (SELECT nationkey,name FROM nation INTERSECT SELECT regionkey, name FROM nation) n", "VALUES (5, 3)");
         assertQuery("SELECT COUNT(*) * 2 FROM nation INTERSECT (SELECT SUM(nationkey) FROM nation GROUP BY regionkey ORDER BY 1 LIMIT 2)", "SELECT 50");
-        assertQuery("SELECT COUNT(a) FROM (SELECT nationkey AS a FROM (SELECT nationkey FROM nation INTERSECT SELECT regionkey FROM nation)n1 INTERSECT SELECT regionkey FROM nation) n2", "SELECT 5");
-        assertQuery("SELECT count(*),SUM(2), regionkey FROM (SELECT nationkey, regionkey FROM nation INTERSECT SELECT regionkey, regionkey FROM nation)n GROUP BY regionkey", "VALUES (1, 2, 0), (1, 2, 1), (1, 2, 4)");
-        assertQuery("SELECT count(*) FROM (SELECT nationkey FROM nation INTERSECT SELECT 2)n1 INTERSECT SELECT regionkey FROM nation", "SELECT 1");
+        assertQuery("SELECT COUNT(a) FROM (SELECT nationkey AS a FROM (SELECT nationkey FROM nation INTERSECT SELECT regionkey FROM nation) n1 INTERSECT SELECT regionkey FROM nation) n2", "SELECT 5");
+        assertQuery("SELECT COUNT(*), SUM(2), regionkey FROM (SELECT nationkey, regionkey FROM nation INTERSECT SELECT regionkey, regionkey FROM nation) n GROUP BY regionkey", "VALUES (1, 2, 0), (1, 2, 1), (1, 2, 4)");
+        assertQuery("SELECT COUNT(*) FROM (SELECT nationkey FROM nation INTERSECT SELECT 2) n1 INTERSECT SELECT regionkey FROM nation", "SELECT 1");
     }
 
     @Test
     public void testIntersectAllFails()
     {
         assertQueryFails("SELECT * FROM (VALUES 1, 2, 3, 4) INTERSECT ALL SELECT * FROM (VALUES 3, 4)", "line 1:35: INTERSECT ALL not yet implemented");
+    }
+
+    @Test
+    public void testExcept()
+            throws Exception
+    {
+        assertQuery("SELECT regionkey FROM nation WHERE nationkey < 7 EXCEPT select regionkey FROM nation WHERE nationkey > 21", "VALUES 0, 4");
+        assertQuery("SELECT regionkey FROM nation WHERE nationkey < 7 EXCEPT DISTINCT SELECT regionkey FROM nation WHERE nationkey > 21", "VALUES 0, 4");
+        assertQuery("WITH wnation AS (SELECT nationkey, regionkey FROM nation) SELECT regionkey FROM wnation WHERE nationkey < 7 EXCEPT SELECT regionkey FROM wnation WHERE nationkey > 21", "VALUES 0, 4");
+        assertQuery("SELECT num FROM (SELECT 1 as num FROM nation WHERE nationkey=10 EXCEPT SELECT 2 FROM nation WHERE nationkey=20) T", "SELECT 1");
+        assertQuery("SELECT nationkey, nationkey / 2 FROM (SELECT nationkey FROM nation WHERE nationkey < 10 EXCEPT SELECT nationkey FROM nation WHERE nationkey > 4) T WHERE nationkey % 2 = 0", "VALUES (0,0), (2, 1), (4, 2)");
+        assertQuery("SELECT regionkey FROM (SELECT regionkey FROM nation WHERE nationkey < 7 EXCEPT SELECT regionkey FROM nation WHERE nationkey > 21) UNION SELECT 3", "VALUES 0, 4, 3");
+        assertQuery("SELECT regionkey FROM (SELECT regionkey FROM nation WHERE nationkey < 7 UNION SELECT regionkey FROM nation WHERE nationkey > 21) EXCEPT SELECT 1", "VALUES 0, 3, 4");
+        assertQuery("SELECT regionkey FROM (SELECT regionkey FROM nation WHERE nationkey < 7 EXCEPT SELECT regionkey FROM nation WHERE nationkey > 21) UNION ALL SELECT 4", "VALUES 4, 0, 4");
+        assertQuery("SELECT * FROM (VALUES 1, 2) EXCEPT SELECT * FROM (VALUES 3.0, 2)", "VALUES 1.0");
+
+        MaterializedResult emptyResult = computeActual("SELECT 0 EXCEPT (SELECT regionkey FROM nation WHERE nationkey <10)");
+        assertEquals(emptyResult.getMaterializedRows().size(), 0);
+    }
+
+    @Test
+    public void testExceptWithAggregation()
+            throws Exception
+    {
+        assertQuery("SELECT COUNT(*) FROM nation EXCEPT SELECT COUNT(regionkey) FROM nation where regionkey < 3 HAVING SUM(regionkey) IS NOT NULL", "SELECT 25");
+        assertQuery("SELECT SUM(nationkey), COUNT(name) FROM (SELECT nationkey, name FROM nation where nationkey < 6 EXCEPT SELECT regionkey, name FROM nation) n", "VALUES (10, 3)");
+        assertQuery("(SELECT SUM(nationkey) FROM nation GROUP BY regionkey ORDER BY 1 LIMIT 2) EXCEPT SELECT COUNT(*) * 2 FROM nation", "SELECT 47");
+        assertQuery("SELECT COUNT(a) FROM (SELECT nationkey AS a FROM (SELECT nationkey FROM nation EXCEPT SELECT regionkey FROM nation) n1 EXCEPT SELECT regionkey FROM nation) n2", "SELECT 20");
+        assertQuery("SELECT COUNT(*), SUM(2), regionkey FROM (SELECT nationkey, regionkey FROM nation EXCEPT SELECT regionkey, regionkey FROM nation) n GROUP BY regionkey HAVING regionkey < 3", "VALUES (4, 8, 0), (4, 8, 1), (5, 10, 2)");
+        assertQuery("SELECT COUNT(*) FROM (SELECT nationkey FROM nation EXCEPT SELECT 10) n1 EXCEPT SELECT regionkey FROM nation", "SELECT 24");
+    }
+
+    @Test
+    public void testExceptAllFails()
+    {
+        assertQueryFails("SELECT * FROM (VALUES 1, 2, 3, 4) EXCEPT ALL SELECT * FROM (VALUES 3, 4)", "line 1:35: EXCEPT ALL not yet implemented");
     }
 
     @Test
@@ -4151,7 +4187,7 @@ public abstract class AbstractTestQueries
         assertQuery("SELECT \"TOTALPRICE\" \"my price\" FROM \"ORDERS\"");
     }
 
-    @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "line 1:39: Column '\"orderkey_1\"' cannot be resolved")
+    @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "line 1:39: Column 'orderkey_1' cannot be resolved")
     public void testInvalidColumn()
             throws Exception
     {
@@ -4291,13 +4327,19 @@ public abstract class AbstractTestQueries
             throws Exception
     {
         assertQuery("" +
-                "WITH a AS (SELECT custkey FROM orders), " +
+                "WITH a AS (SELECT 1), " +
                 "     b AS (" +
-                "         WITH a AS (SELECT orderkey FROM orders)" +
-                "         SELECT * FROM a" + // should refer to inner 'a'
+                "         WITH a AS (SELECT 2)" +
+                "         SELECT * FROM a" +
                 "    )" +
                 "SELECT * FROM b",
-                "SELECT orderkey FROM orders"
+                "SELECT 2"
+        );
+        assertQueryFails("" +
+                        "WITH a AS (VALUES 1), " +
+                        "     a AS (VALUES 2)" +
+                        "SELECT * FROM a",
+                "line 1:28: WITH query name 'a' specified more than once"
         );
     }
 
@@ -4794,8 +4836,8 @@ public abstract class AbstractTestQueries
         assertEquals(functions.get("avg").asList().get(1).getField(1), "double");
         assertEquals(functions.get("avg").asList().get(1).getField(2), "double");
         assertEquals(functions.get("avg").asList().get(1).getField(3), "aggregate");
-        assertEquals(functions.get("avg").asList().get(2).getField(1), "float");
-        assertEquals(functions.get("avg").asList().get(2).getField(2), "float");
+        assertEquals(functions.get("avg").asList().get(2).getField(1), "real");
+        assertEquals(functions.get("avg").asList().get(2).getField(2), "real");
         assertEquals(functions.get("avg").asList().get(2).getField(3), "aggregate");
 
         assertTrue(functions.containsKey("abs"), "Expected function names " + functions + " to contain 'abs'");
