@@ -77,7 +77,7 @@ public class ChicagoConnectorConfig
     return this.zkString;
   }
 
-  @Config("chicago.zkString")
+  @Config("chicago.zkstring")
   public ChicagoConnectorConfig setZkSring(String zk)
   {
     this.zkString = zk;
@@ -120,7 +120,7 @@ public class ChicagoConnectorConfig
     return defaultSchema;
   }
 
-  @Config("redis.default-schema")
+  @Config("chicago.default-schema")
   public ChicagoConnectorConfig setDefaultSchema(String defaultSchema)
   {
     this.defaultSchema = defaultSchema;
@@ -146,7 +146,7 @@ public class ChicagoConnectorConfig
     return this.quorumSize;
   }
 
-  @Config("Chicago.quorum")
+  @Config("chicago.quorum")
   public ChicagoConnectorConfig setQuorumSize(int q)
   {
     this.quorumSize = q;

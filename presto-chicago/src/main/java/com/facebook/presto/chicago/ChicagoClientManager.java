@@ -86,7 +86,8 @@ public class ChicagoClientManager
        * I don't know if this is the right way to load the colFamilies as table names
        * I don't know if this happens in the start. i.e., show tables;
        */
-      ChicagoClient cc = new ChicagoClient(zkConnectionString, chicagoConnectorConfig.getQuorumSize());
+      // ChicagoClient cc = new ChicagoClient(zkConnectionString, chicagoConnectorConfig.getQuorumSize());
+      ChicagoClient cc = new ChicagoClient(zkConnectionString); // chicagoConnectorConfig.getQuorumSize());
       cc.startAndWaitForNodes(chicagoConnectorConfig.getQuorumSize());
       List<String> tables = cc.scanColFamily();
       chicagoConnectorConfig.setTableNames(tables.toString());
