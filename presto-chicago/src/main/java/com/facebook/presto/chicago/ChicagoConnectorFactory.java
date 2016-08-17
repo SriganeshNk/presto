@@ -17,6 +17,7 @@ import com.facebook.presto.spi.Connector;
 import com.facebook.presto.spi.ConnectorFactory;
 import com.facebook.presto.spi.ConnectorHandleResolver;
 import com.facebook.presto.spi.SchemaTableName;
+import com.facebook.presto.spi.connector.ConnectorContext;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -63,7 +64,7 @@ public class ChicagoConnectorFactory implements ConnectorFactory
   }
 
   @Override
-  public Connector create(String connectorId, Map<String, String> config)
+  public Connector create(String connectorId, Map<String, String> config, ConnectorContext ctx)
   {
     requireNonNull(connectorId, "connectorId is null");
     requireNonNull(config, "config is null");

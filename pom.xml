@@ -875,7 +875,7 @@
                                         <ignore />
                                     </action>
                                 </pluginExecution>
-                                <!--pluginExecution>
+                                <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>com.ning.maven.plugins</groupId>
                                         <artifactId>maven-duplicate-finder-plugin</artifactId>
@@ -887,7 +887,7 @@
                                     <action>
                                         <ignore />
                                     </action>
-                                </pluginExecution-->
+                                </pluginExecution>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>org.apache.maven.plugins</groupId>
@@ -930,7 +930,7 @@
                                         <ignore />
                                     </action>
                                 </pluginExecution>
-                                <!--pluginExecution>
+                                <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>org.gaul</groupId>
                                         <artifactId>modernizer-maven-plugin</artifactId>
@@ -942,7 +942,7 @@
                                     <action>
                                         <ignore />
                                     </action>
-                                </pluginExecution-->
+                                </pluginExecution>
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
                     </configuration>
@@ -951,7 +951,7 @@
         </pluginManagement>
 
         <plugins>
-            <!--plugin>
+            <plugin>
                 <groupId>org.gaul</groupId>
                 <artifactId>modernizer-maven-plugin</artifactId>
                 <version>1.2.2</version>
@@ -967,7 +967,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin-->
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
