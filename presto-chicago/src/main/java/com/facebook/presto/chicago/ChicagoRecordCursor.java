@@ -57,11 +57,7 @@ public class ChicagoRecordCursor implements RecordCursor
 
   private final ChicagoSplit split;
   private final List<DecoderColumnHandle> columnHandles;
-  //private final ChicagoClientManager chicagoClientManager;
   private final ChicagoAsyncClient cc;
-  //private final ScanParams scanParms;
-
-  //private ScanResult<String> chicagoCursor;
   private Iterator<String> keysIterator;
 
   private final AtomicBoolean reported = new AtomicBoolean();
@@ -124,10 +120,7 @@ public class ChicagoRecordCursor implements RecordCursor
   public boolean advanceNextPosition()
   {
     while (!keysIterator.hasNext()) {
-      //if (!hasUnscannedData()) {
-        return endOfData();
-      //}
-      //fetchKeys();
+      return endOfData();
     }
     return nextRow(keysIterator.next());
   }

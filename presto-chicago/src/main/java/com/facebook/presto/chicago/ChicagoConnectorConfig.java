@@ -39,7 +39,7 @@ public class ChicagoConnectorConfig
   /**
    * The default quorum size for the Chicago servers.
    */
-  private int quorumSize = 1;
+  private int quorumSize = 3;
 
   /**
    * Count parameter for Redis scan command.
