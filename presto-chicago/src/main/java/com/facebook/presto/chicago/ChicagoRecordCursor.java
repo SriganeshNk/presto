@@ -21,6 +21,7 @@ import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.type.Type;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.xjeffrose.chicago.client.ChicagoAsyncClient;
 import com.xjeffrose.chicago.client.ChicagoClient;
 import io.airlift.log.Logger;
 import io.airlift.slice.Slice;
@@ -56,8 +57,8 @@ public class ChicagoRecordCursor implements RecordCursor
 
   private final ChicagoSplit split;
   private final List<DecoderColumnHandle> columnHandles;
-  private final ChicagoClientManager chicagoClientManager;
-  private final ChicagoClient cc;
+  //private final ChicagoClientManager chicagoClientManager;
+  private final ChicagoAsyncClient cc;
   //private final ScanParams scanParms;
 
   //private ScanResult<String> chicagoCursor;
@@ -87,7 +88,7 @@ public class ChicagoRecordCursor implements RecordCursor
     this.valueFieldDecoders = valueFieldDecoders;
     this.split = split;
     this.columnHandles = columnHandles;
-    this.chicagoClientManager = chicagoClientManager;
+    //this.chicagoClientManager = chicagoClientManager;
     // this i probably a hack. Need to see how to make it more seemless.
     this.cc = chicagoClientManager.getChicagoClient(chicagoClientManager.getChicagoConnectorConfig().getZkString());
     //this.scanParms = setScanParms(); // I don't know what to set here
@@ -267,8 +268,8 @@ public class ChicagoRecordCursor implements RecordCursor
     try {
       switch (split.getKeyDataType()) {
         case STRING: {
-          ListenableFuture<List<byte[]>> f = cc.scanKeys(this.split.getTableName().getBytes());
-          byte[] b = f.get().get(0);
+          ListenableFuture<byte[]> f = cc.scanKeys(this.split.getTableName().getBytes());
+          byte[] b = f.get();
           String resp = new String(b);
           List<String> keys = Arrays.asList(resp.split("\0")[0].split("@@@"));
           keysIterator = keys.iterator();
@@ -297,8 +298,8 @@ public class ChicagoRecordCursor implements RecordCursor
     try {
       switch (split.getValueDataType()) {
         case STRING:
-          ListenableFuture<List<byte[]>> resp = cc.read(split.getTableName().getBytes(), keyString.getBytes());
-          valueString = Arrays.asList(new String(resp.get().get(0)).split("@@@")).toString();
+          ListenableFuture<byte[]> resp = cc.read(split.getTableName().getBytes(), keyString.getBytes());
+          valueString = Arrays.asList(new String(resp.get()).split("@@@")).toString();
           if (valueString == null) {
             log.warn("Chicago data modified while query was running, string value at key %s deleted", keyString);
             return false;

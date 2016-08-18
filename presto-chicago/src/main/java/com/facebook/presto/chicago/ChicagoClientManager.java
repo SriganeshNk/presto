@@ -17,6 +17,7 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.xjeffrose.chicago.client.ChicagoAsyncClient;
 import com.xjeffrose.chicago.client.ChicagoClient;
 import io.airlift.log.Logger;
 
@@ -36,23 +37,23 @@ public class ChicagoClientManager
 {
   private static final Logger log = Logger.get(ChicagoClientManager.class);
 
-  private final LoadingCache<String, ChicagoClient> chicagoClientCache;
+  private final LoadingCache<String, ChicagoAsyncClient> chicagoClientCache;
 
   private final ChicagoConnectorConfig chicagoConnectorConfig;
 
   @Inject
-  ChicagoClientManager(ChicagoConnectorConfig chicagoConnectorConfig)
+  ChicagoClientManager(ChicagoConnectorConfig chicagoConnectorConfig) throws Exception
   {
     this.chicagoConnectorConfig = requireNonNull(chicagoConnectorConfig, "chicagoConfig is null");
-    this.chicagoClientCache = CacheBuilder.newBuilder().build(new ChicagoClientLoader());
+    this.chicagoClientCache = CacheBuilder.newBuilder().build(new ChicagoClientLoader(chicagoConnectorConfig.getZkString()));
   }
 
   @PreDestroy
   public void tearDown()
   {
-    for (Map.Entry<String, ChicagoClient> entry : chicagoClientCache.asMap().entrySet()) {
+    for (Map.Entry<String, ChicagoAsyncClient> entry : chicagoClientCache.asMap().entrySet()) {
       try {
-        entry.getValue().stop();
+        entry.getValue().close();
       }
       catch (Exception e) {
         log.warn(e, "While stopping chicago client %s:", entry.getKey());
@@ -65,7 +66,7 @@ public class ChicagoClientManager
     return chicagoConnectorConfig;
   }
 
-  public ChicagoClient getChicagoClient(String host)
+  public ChicagoAsyncClient getChicagoClient(String host)
   {
     requireNonNull(host, "host is null");
     try {
@@ -76,21 +77,25 @@ public class ChicagoClientManager
     }
   }
 
-  private class ChicagoClientLoader extends CacheLoader<String, ChicagoClient>
+  private class ChicagoClientLoader extends CacheLoader<String, ChicagoAsyncClient>
   {
+    private ChicagoAsyncClient cc;
+
+    public ChicagoClientLoader(String zkConnectionString) throws Exception{
+      cc = new ChicagoAsyncClient(zkConnectionString, chicagoConnectorConfig.getQuorumSize());
+      cc.start();
+      List<String> tables = cc.scanColFamily();
+      chicagoConnectorConfig.setTableNames(tables.toString());
+    }
+
     @Override
-    public ChicagoClient load(String zkConnectionString) throws Exception
+    public ChicagoAsyncClient load(String zkConnectionString) throws Exception
     {
       log.info("Creating new ChicagoClient for %s", zkConnectionString);
       /**
        * I don't know if this is the right way to load the colFamilies as table names
        * I don't know if this happens in the start. i.e., show tables;
        */
-      // ChicagoClient cc = new ChicagoClient(zkConnectionString, chicagoConnectorConfig.getQuorumSize());
-      ChicagoClient cc = new ChicagoClient(zkConnectionString); // chicagoConnectorConfig.getQuorumSize());
-      cc.startAndWaitForNodes(chicagoConnectorConfig.getQuorumSize());
-      List<String> tables = cc.scanColFamily();
-      chicagoConnectorConfig.setTableNames(tables.toString());
       return cc;
     }
   }

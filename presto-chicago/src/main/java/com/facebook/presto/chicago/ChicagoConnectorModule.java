@@ -32,15 +32,24 @@ import static io.airlift.json.JsonCodecBinder.jsonCodecBinder;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Guice module for the Redis connector.
+ * Guice module for the Chicago connector.
  */
 public class ChicagoConnectorModule implements Module
 {
+  private final String connectorId;
+  private final TypeManager typeManager;
+
+  public ChicagoConnectorModule(String connectorId, TypeManager typeManager)
+  {
+    this.connectorId = requireNonNull(connectorId, "connector id is null");
+    this.typeManager = requireNonNull(typeManager, "typeManager is null");
+  }
   @Override
   public void configure(Binder binder)
   {
+    binder.bind(TypeManager.class).toInstance(typeManager);
     binder.bind(ChicagoConnector.class).in(Scopes.SINGLETON);
-
+    binder.bind(ChicagoConnectorId.class).toInstance(new ChicagoConnectorId(connectorId));
     binder.bind(ChicagoMetadata.class).in(Scopes.SINGLETON);
     binder.bind(ChicagoSplitManager.class).in(Scopes.SINGLETON);
     binder.bind(ChicagoRecordSetProvider.class).in(Scopes.SINGLETON);

@@ -49,7 +49,7 @@ import static com.facebook.presto.chicago.ChicagoHandleResolver.convertTableHand
 import static java.util.Objects.requireNonNull;
 
 /**
- * Manages the Redis connector specific metadata information. The Connector provides an additional set of columns
+ * Manages the Chicago connector specific metadata information. The Connector provides an additional set of columns
  * for each table that are created as hidden columns. See {@link ChicagoInternalFieldDescription} for a list
  * of additional columns.
  */
@@ -69,7 +69,7 @@ public class ChicagoMetadata implements ConnectorMetadata
       ChicagoConnectorConfig chicagoConnectorConfig,
       Supplier<Map<SchemaTableName, ChicagoTableDescription>> chicagoTableDescriptionSupplier,
       Set<ChicagoInternalFieldDescription> internalFieldDescriptions)
-  {
+   {
     this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
 
     requireNonNull(chicagoConnectorConfig, "chicagoConfig is null");

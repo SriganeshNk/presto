@@ -34,8 +34,7 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 
-public class ChicagoTableDescriptionSupplier
-    implements Supplier<Map<SchemaTableName, ChicagoTableDescription>>
+public class ChicagoTableDescriptionSupplier implements Supplier<Map<SchemaTableName, ChicagoTableDescription>>
 {
   private static final Logger log = Logger.get(ChicagoTableDescriptionSupplier.class);
 

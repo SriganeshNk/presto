@@ -13,10 +13,7 @@
  */
 package com.facebook.presto.chicago;
 
-import com.facebook.presto.spi.Connector;
-import com.facebook.presto.spi.ConnectorFactory;
-import com.facebook.presto.spi.ConnectorHandleResolver;
-import com.facebook.presto.spi.SchemaTableName;
+import com.facebook.presto.spi.*;
 import com.facebook.presto.spi.connector.ConnectorContext;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.base.Supplier;
@@ -72,11 +69,8 @@ public class ChicagoConnectorFactory implements ConnectorFactory
     try {
       Bootstrap app = new Bootstrap(
           new JsonModule(),
-          new ChicagoConnectorModule(),
+          new ChicagoConnectorModule(connectorId, typeManager),
           binder -> {
-            binder.bind(ChicagoConnectorId.class).toInstance(new ChicagoConnectorId(connectorId));
-            binder.bind(TypeManager.class).toInstance(typeManager);
-
             if (tableDescriptionSupplier.isPresent()) {
               binder.bind(new TypeLiteral<Supplier<Map<SchemaTableName, ChicagoTableDescription>>>() {}).toInstance(tableDescriptionSupplier.get());
             }
@@ -85,8 +79,7 @@ public class ChicagoConnectorFactory implements ConnectorFactory
                   .to(ChicagoTableDescriptionSupplier.class)
                   .in(Scopes.SINGLETON);
             }
-          }
-      );
+          });
 
       Injector injector = app.strictConfig()
           .doNotInitializeLogging()

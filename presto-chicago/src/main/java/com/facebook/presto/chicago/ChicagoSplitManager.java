@@ -57,7 +57,7 @@ public class ChicagoSplitManager implements ConnectorSplitManager
 
     String nodes = chicagoConnectorConfig.getZkString();
 
-    checkState(nodes == null, "ZKString  no longer exists");
+    checkState(nodes != null, "ZKString  no longer exists");
     ImmutableList.Builder<ConnectorSplit> builder = ImmutableList.builder();
 
     ChicagoSplit split = new ChicagoSplit(connectorId,

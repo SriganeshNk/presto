@@ -39,14 +39,14 @@ public class ChicagoConnectorConfig
   /**
    * The default quorum size for the Chicago servers.
    */
-  private int quorumSize = 3;
+  private int quorumSize = 1;
 
   /**
    * Count parameter for Redis scan command.
    * This is not needed. I suppose.
    * May be we might need when we get the number of column families.
    */
-  private int chicagoScanCount = 100;
+  private int scanCount = 100;
 
   /**
    * The schema name to use in the connector.
@@ -78,7 +78,7 @@ public class ChicagoConnectorConfig
   }
 
   @Config("chicago.zk-string")
-  public ChicagoConnectorConfig setZkSring(String zk)
+  public ChicagoConnectorConfig setZkString(String zk)
   {
     this.zkString = zk;
     return this;
@@ -107,7 +107,7 @@ public class ChicagoConnectorConfig
     return tableNames;
   }
 
-  @Config("chicago.table-names")
+  //@Config("chicago.table-names")
   public ChicagoConnectorConfig setTableNames(String tableNames)
   {
     this.tableNames = ImmutableSet.copyOf(Splitter.on(',').omitEmptyStrings().trimResults().split(tableNames));
@@ -140,15 +140,15 @@ public class ChicagoConnectorConfig
     return this;
   }
 
-  public int getChicagoScanCount()
+  public int getScanCount()
   {
-    return chicagoScanCount;
+    return scanCount;
   }
 
   @Config("chicago.scan-count")
-  public ChicagoConnectorConfig setRedisScanCount(int chicagoScanCount)
+  public ChicagoConnectorConfig setScanCount(int chicagoScanCount)
   {
-    this.chicagoScanCount = chicagoScanCount;
+    this.scanCount = chicagoScanCount;
     return this;
   }
 
