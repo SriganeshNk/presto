@@ -99,8 +99,6 @@ public class ChicagoMetadata implements ConnectorMetadata
       return null;
     }
 
-    // check if keys are supplied in a zset
-    // via the table description doc
     String keyName = null;
     if (table.getKey() != null) {
       keyName = table.getKey().getName();
