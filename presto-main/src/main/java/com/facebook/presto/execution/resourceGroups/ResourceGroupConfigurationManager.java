@@ -13,11 +13,18 @@
  */
 package com.facebook.presto.execution.resourceGroups;
 
+import java.util.List;
+
 public interface ResourceGroupConfigurationManager
 {
     /**
      * Implementations may retain a reference to the group, and re-configure it asynchronously.
      * This method is called, once, when the group is created.
      */
-    void configure(ConfigurableResourceGroup group, SelectionContext context);
+    void configure(ResourceGroup group, SelectionContext context);
+
+    /**
+     * This method is called for every query that is submitted, so it should be fast.
+     */
+    List<ResourceGroupSelector> getSelectors();
 }

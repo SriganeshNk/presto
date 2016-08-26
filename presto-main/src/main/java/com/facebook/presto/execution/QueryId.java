@@ -15,20 +15,17 @@ package com.facebook.presto.execution;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 
-import javax.annotation.concurrent.Immutable;
-
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
+import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
 
-@Immutable
-public class QueryId
+public final class QueryId
 {
     @JsonCreator
     public static QueryId valueOf(String queryId)
@@ -71,7 +68,7 @@ public class QueryId
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        final QueryId other = (QueryId) obj;
+        QueryId other = (QueryId) obj;
         return Objects.equals(this.id, other.id);
     }
 
@@ -95,7 +92,7 @@ public class QueryId
         checkArgument(expectedParts > 0, "expectedParts must be at least 1");
         requireNonNull(name, "name is null");
 
-        ImmutableList<String> ids = ImmutableList.copyOf(Splitter.on('.').split(id));
+        List<String> ids = unmodifiableList(Arrays.asList(id.split("\\.")));
         checkArgument(ids.size() == expectedParts, "Invalid %s %s", name, id);
 
         for (String part : ids) {
@@ -103,5 +100,12 @@ public class QueryId
             checkArgument(ID_PATTERN.matcher(part).matches(), "Invalid id %s", id);
         }
         return ids;
+    }
+
+    private static void checkArgument(boolean condition, String message, Object... messageArgs)
+    {
+        if (!condition) {
+            throw new IllegalArgumentException(format(message, messageArgs));
+        }
     }
 }

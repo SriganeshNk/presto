@@ -21,6 +21,7 @@ import com.facebook.presto.metadata.SignatureBinder;
 import com.facebook.presto.metadata.TypeVariableConstraint;
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.PrestoException;
+import com.facebook.presto.spi.function.FunctionDependency;
 import com.facebook.presto.spi.function.LiteralParameters;
 import com.facebook.presto.spi.function.OperatorDependency;
 import com.facebook.presto.spi.function.OperatorType;
@@ -46,6 +47,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -58,6 +60,7 @@ import java.util.stream.Stream;
 import static com.facebook.presto.metadata.FunctionKind.SCALAR;
 import static com.facebook.presto.metadata.Signature.comparableTypeParameter;
 import static com.facebook.presto.metadata.Signature.internalOperator;
+import static com.facebook.presto.metadata.Signature.internalScalarFunction;
 import static com.facebook.presto.metadata.Signature.orderableTypeParameter;
 import static com.facebook.presto.metadata.Signature.typeVariable;
 import static com.facebook.presto.spi.StandardErrorCode.FUNCTION_IMPLEMENTATION_ERROR;
@@ -211,23 +214,40 @@ public class ScalarImplementation
         Object resolve(BoundVariables boundVariables, TypeManager typeManager, FunctionRegistry functionRegistry);
     }
 
+    private static final class FunctionImplementationDependency
+            extends ScalarImplementationDependency
+    {
+        private FunctionImplementationDependency(String name, TypeSignature returnType, List<TypeSignature> argumentTypes)
+        {
+            super(internalScalarFunction(name, returnType, argumentTypes));
+        }
+    }
+
     private static final class OperatorImplementationDependency
-            implements ImplementationDependency
+            extends ScalarImplementationDependency
     {
         private final OperatorType operator;
-        private final Signature signature;
 
         private OperatorImplementationDependency(OperatorType operator, TypeSignature returnType, List<TypeSignature> argumentTypes)
         {
+            super(internalOperator(operator, returnType, argumentTypes));
             this.operator = requireNonNull(operator, "operator is null");
-            requireNonNull(returnType, "returnType is null");
-            requireNonNull(argumentTypes, "argumentTypes is null");
-            this.signature = internalOperator(operator, returnType, argumentTypes);
         }
 
         public OperatorType getOperator()
         {
             return operator;
+        }
+    }
+
+    private abstract static class ScalarImplementationDependency
+            implements ImplementationDependency
+    {
+        private final Signature signature;
+
+        private ScalarImplementationDependency(Signature signature)
+        {
+            this.signature = requireNonNull(signature, "signature is null");
         }
 
         public Signature getSignature()
@@ -355,7 +375,7 @@ public class ScalarImplementation
                         checkArgument(typeParameters.contains(annotation), "Injected type parameters must be declared with @TypeParameter annotation on the method [%s]", method);
                     }
                     if (annotation instanceof LiteralParameter) {
-                        checkArgument(literalParameters.contains(((LiteralParameter) annotation).value()), "Parameter injected by @LiteralParameter must be declared in @LiteralParameter.");
+                        checkArgument(literalParameters.contains(((LiteralParameter) annotation).value()), "Parameter injected by @LiteralParameter must be declared with @LiteralParameters on the method [%s]", method);
                     }
                     dependencies.add(parseDependency(annotation));
                 }
@@ -497,20 +517,31 @@ public class ScalarImplementation
             return typeVariableConstraints.build();
         }
 
-        private static ImplementationDependency parseDependency(Annotation annotation)
+        private ImplementationDependency parseDependency(Annotation annotation)
         {
             if (annotation instanceof TypeParameter) {
                 return new TypeImplementationDependency(((TypeParameter) annotation).value());
+            }
+            if (annotation instanceof LiteralParameter) {
+                return new LiteralImplementationDependency(((LiteralParameter) annotation).value());
+            }
+            if (annotation instanceof FunctionDependency) {
+                FunctionDependency function = (FunctionDependency) annotation;
+                return new FunctionImplementationDependency(
+                        function.name(),
+                        parseTypeSignature(function.returnType(), literalParameters),
+                        Arrays.stream(function.argumentTypes())
+                                .map(signature -> parseTypeSignature(signature, literalParameters))
+                                .collect(toImmutableList()));
             }
             if (annotation instanceof OperatorDependency) {
                 OperatorDependency operator = (OperatorDependency) annotation;
                 return new OperatorImplementationDependency(
                         operator.operator(),
-                        parseTypeSignature(operator.returnType()),
-                        asList(operator.argumentTypes()).stream().map(TypeSignature::parseTypeSignature).collect(toImmutableList()));
-            }
-            if (annotation instanceof LiteralParameter) {
-                return new LiteralImplementationDependency(((LiteralParameter) annotation).value());
+                        parseTypeSignature(operator.returnType(), literalParameters),
+                        Arrays.stream(operator.argumentTypes())
+                                .map(signature -> parseTypeSignature(signature, literalParameters))
+                                .collect(toImmutableList()));
             }
             throw new IllegalArgumentException("Unsupported annotation " + annotation.getClass().getSimpleName());
         }
@@ -518,13 +549,10 @@ public class ScalarImplementation
         private static boolean containsMetaParameter(Annotation[] annotations)
         {
             for (Annotation annotation : annotations) {
-                if (annotation instanceof TypeParameter) {
-                    return true;
-                }
-                if (annotation instanceof OperatorDependency) {
-                    return true;
-                }
-                if (annotation instanceof LiteralParameter) {
+                if (annotation instanceof TypeParameter ||
+                        annotation instanceof LiteralParameter ||
+                        annotation instanceof FunctionDependency ||
+                        annotation instanceof OperatorDependency) {
                     return true;
                 }
             }
