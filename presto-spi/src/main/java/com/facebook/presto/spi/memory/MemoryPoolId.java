@@ -11,14 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.presto.memory;
+package com.facebook.presto.spi.memory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 public final class MemoryPoolId
@@ -29,7 +28,9 @@ public final class MemoryPoolId
     public MemoryPoolId(String id)
     {
         requireNonNull(id, "id is null");
-        checkArgument(!id.isEmpty(), "id is empty");
+        if (id.isEmpty()) {
+            throw new IllegalArgumentException("id is empty");
+        }
         this.id = id;
     }
 

@@ -20,6 +20,7 @@ import com.facebook.presto.memory.VersionedMemoryPoolId;
 import com.facebook.presto.operator.BlockedReason;
 import com.facebook.presto.spi.ErrorCode;
 import com.facebook.presto.spi.PrestoException;
+import com.facebook.presto.spi.QueryId;
 import com.facebook.presto.sql.planner.PlanFragment;
 import com.facebook.presto.sql.planner.plan.TableScanNode;
 import com.facebook.presto.transaction.TransactionId;
@@ -220,7 +221,7 @@ public class QueryStateMachine
         // don't report failure info is query is marked as success
         FailureInfo failureInfo = null;
         ErrorCode errorCode = null;
-        if (state != FINISHED) {
+        if (state == FAILED) {
             ExecutionFailureInfo failureCause = this.failureCause.get();
             if (failureCause != null) {
                 failureInfo = failureCause.toFailureInfo();
@@ -531,8 +532,9 @@ public class QueryStateMachine
 
         recordDoneStats();
 
-        // NOTE: this must be set before triggering the state change, so listeners
-        // can be observe the exception
+        // NOTE: The failure cause must be set before triggering the state change, so
+        // listeners can observe the exception. This is safe because the failure cause
+        // can only be observed if the transition to FAILED is successful.
         failureCause.compareAndSet(null, toFailure(throwable));
 
         boolean failed = queryState.setIf(FAILED, currentState -> !currentState.isDone());
@@ -551,9 +553,13 @@ public class QueryStateMachine
     {
         recordDoneStats();
 
+        // NOTE: The failure cause must be set before triggering the state change, so
+        // listeners can observe the exception. This is safe because the failure cause
+        // can only be observed if the transition to FAILED is successful.
+        failureCause.compareAndSet(null, toFailure(new PrestoException(USER_CANCELED, "Query was canceled")));
+
         boolean canceled = queryState.setIf(FAILED, currentState -> !currentState.isDone());
         if (canceled) {
-            failureCause.compareAndSet(null, toFailure(new PrestoException(USER_CANCELED, "Query was canceled")));
             session.getTransactionId().ifPresent(autoCommit ? transactionManager::asyncAbort : transactionManager::fail);
         }
 
