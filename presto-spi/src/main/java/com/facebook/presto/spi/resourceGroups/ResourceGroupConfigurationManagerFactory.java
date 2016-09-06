@@ -11,20 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.presto.raptor.metadata;
+package com.facebook.presto.spi.resourceGroups;
 
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Map;
 
-public final class JdbcUtil
+public interface ResourceGroupConfigurationManagerFactory
 {
-    private JdbcUtil() {}
+    String getName();
 
-    public static void enableStreamingResults(Statement statement)
-            throws SQLException
-    {
-        if (statement.isWrapperFor(com.mysql.jdbc.Statement.class)) {
-            statement.unwrap(com.mysql.jdbc.Statement.class).enableStreamingResults();
-        }
-    }
+    ResourceGroupConfigurationManager create(Map<String, String> config, ResourceGroupConfigurationManagerContext context);
 }

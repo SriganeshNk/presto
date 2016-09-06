@@ -11,35 +11,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.presto.execution.resourceGroups;
+package com.facebook.presto.raptor.metadata;
 
 import com.google.common.collect.ImmutableMap;
-import io.airlift.configuration.testing.ConfigAssertions;
 import org.testng.annotations.Test;
 
 import java.util.Map;
 
 import static io.airlift.configuration.testing.ConfigAssertions.assertFullMapping;
 import static io.airlift.configuration.testing.ConfigAssertions.assertRecordedDefaults;
+import static io.airlift.configuration.testing.ConfigAssertions.recordDefaults;
 
-public class TestFileResourceGroupConfig
+public class TestJdbcDatabaseConfig
 {
     @Test
     public void testDefaults()
     {
-        assertRecordedDefaults(ConfigAssertions.recordDefaults(FileResourceGroupConfig.class)
-                .setConfigFile(null));
+        assertRecordedDefaults(recordDefaults(JdbcDatabaseConfig.class)
+                .setUrl(null));
     }
 
     @Test
     public void testExplicitPropertyMappings()
     {
-        Map<String, String> properties = new ImmutableMap.Builder<String, String>()
-                .put("resource-groups.config-file", "/test.json")
+        Map<String, String> properties = ImmutableMap.<String, String>builder()
+                .put("metadata.db.url", "jdbc:test://example.net/test")
                 .build();
 
-        FileResourceGroupConfig expected = new FileResourceGroupConfig()
-                .setConfigFile("/test.json");
+        JdbcDatabaseConfig expected = new JdbcDatabaseConfig()
+                .setUrl("jdbc:test://example.net/test");
 
         assertFullMapping(properties, expected);
     }

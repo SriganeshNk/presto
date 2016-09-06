@@ -101,7 +101,8 @@ public class MockQueryExecution
                 null,
                 null,
                 ImmutableSet.of(),
-                Optional.empty());
+                Optional.empty(),
+                state.isDone());
     }
 
     @Override
@@ -194,6 +195,12 @@ public class MockQueryExecution
     public void addStateChangeListener(StateChangeListener<QueryState> stateChangeListener)
     {
         listeners.add(stateChangeListener);
+    }
+
+    @Override
+    public void addFinalQueryInfoListener(StateChangeListener<QueryInfo> stateChangeListener)
+    {
+        throw new UnsupportedOperationException();
     }
 
     private void fireStateChange()
